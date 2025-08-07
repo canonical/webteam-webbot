@@ -1,0 +1,33 @@
+{
+  "server": {
+    "port": 8080,
+    "node_env": "development"
+  },
+  "mattermost": {
+    "host": "chat.canonical.com",
+    "group": "canonical",
+    "user": "webbot",
+    "access_token": "",
+    "base_url": "",
+    "token": "",
+    "commands": {
+      "acronym_token": "",
+      "meet_token": "",
+      "dir_token": "",
+      "explain_token": ""
+    }
+  },
+  "notifications": {
+    "release_rooms": "",
+    "release_secret": "",
+    "alerts_channel_id": ""
+  },
+  "github": {
+    "token": ""
+  },
+  "google_sheets": {
+    "spreadsheet_id": "",
+    "client_email": "",
+    "private_key": ""
+  }
+}
