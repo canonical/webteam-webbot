@@ -1,0 +1,35 @@
+name: webbot
+base: bare
+build-base: ubuntu@24.04
+version: '0.1'
+summary: Webteam Webbot written in ExpressJS
+description: |
+    This is the webbot for the Webteam, written in ExpressJS. 
+platforms:
+    amd64:
+
+extensions:
+    - expressjs-framework
+
+parts:
+  expressjs-framework/install-app:
+    build-snaps:
+      - bun-js
+    override-build: |
+      rm -rf node_modules
+
+      mkdir -p node_modules
+      npm install --include=dev
+      chown -R $(whoami) node_modules
+
+      bun run build
+
+      craftctl default
+      mkdir -p ${CRAFT_PART_INSTALL}/lib/node_modules/canonical-webbot/dist
+      cp -r dist/. ${CRAFT_PART_INSTALL}/lib/node_modules/canonical-webbot/dist
+      npm config set script-shell=bash --location project
+      cp ${CRAFT_PART_BUILD}/.npmrc ${CRAFT_PART_INSTALL}/lib/node_modules/canonical-webbot/.npmrc
+      chown -R 584792:584792 ${CRAFT_PART_INSTALL}/lib/node_modules/canonical-webbot
+      ln -s /lib/node_modules/canonical-webbot ${CRAFT_PART_INSTALL}/app
+      chown -R 584792:584792 ${CRAFT_PART_INSTALL}/app
+

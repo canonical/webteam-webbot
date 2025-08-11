@@ -1,10 +1,11 @@
 {
   "name": "canonical-webbot",
+  "version": "1.0.0",
   "module": "index.ts",
   "type": "module",
   "scripts": {
     "dev": "bun --watch run index.ts",
-    "start": "bun run index.ts",
+    "start": "node dist/index.js",
     "build": "bun build index.ts --outdir dist --target node"
   },
   "devDependencies": {
