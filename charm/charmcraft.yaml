@@ -1,0 +1,21 @@
+name: canonical-webbot
+type: charm
+base: ubuntu@24.04
+platforms:
+  amd64:
+summary: |
+  A charm for deploying Canonical Webbot. Built with the PaaS-Charm
+description: |
+  A charm for deploying Canonical Webbot. Built with the PaaS-Charm
+
+extensions:
+  - expressjs-framework
+
+config:
+  options:
+    config_file:
+      description: |
+        Webbot Config file (JSON). To send the contents of a file to this configuration option, the symbol '@' can be used.
+
+        Usage: `juju config canonical-webbot config_file=@/path/to/file.json`
+      type: string

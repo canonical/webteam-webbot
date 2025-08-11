@@ -41,15 +41,25 @@ export interface BotConfig {
 	};
 }
 
-export function getConfig(configPath = "config.json"): BotConfig {
-	const fullPath = path.resolve(configPath);
+export function getConfig(): BotConfig {
+
+	if (process.env["APP_CONFIG_FILE"]) {
+		try {
+			const config = JSON.parse(process.env["APP_CONFIG_FILE"]) as BotConfig;
+			return config;
+		} catch (error) {
+			console.error("Error parsing APP_CONFIG_FILE environment variable:", error);
+			throw new Error("Invalid configuration in APP_CONFIG_FILE");
+		}
+	}
+
+	const configFilePath = fs.existsSync("config.local.json") ? "config.local.json" : "config.json"
+	const fullPath = path.resolve(configFilePath);
 	const fileContent = fs.readFileSync(fullPath, "utf-8");
 	const conf = JSON.parse(fileContent) as BotConfig;
 	return conf;
 }
 
-const config = getConfig(
-	fs.existsSync("config.local.json") ? "config.local.json" : "config.json"
-);
+const config = getConfig();
 
 export default config;
