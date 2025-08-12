@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-      - fix-routes # for q/a
+      - fix-routes # for Q/A
   workflow_dispatch:
 permissions:
   contents: read
