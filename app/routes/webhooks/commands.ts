@@ -2,9 +2,11 @@ import { logger } from "../../utils/logger";
 import config from "../../config";
 import { GoogleSpreadsheet } from "google-spreadsheet";
 import { JWT } from "google-auth-library";
-import { webhooksRouter } from ".";
+import { Router } from "express";
 
-webhooksRouter.post("/acronym", async (req, res): Promise<void> => {
+export const router = Router();
+
+router.post("/acronym", async (req, res): Promise<void> => {
   try {
     const { token, text } = req.body;
 
@@ -73,7 +75,7 @@ webhooksRouter.post("/acronym", async (req, res): Promise<void> => {
   }
 });
 
-webhooksRouter.post("/explain", async (req, res): Promise<void> => {
+router.post("/explain", async (req, res): Promise<void> => {
   try {
     const { token, text } = req.body;
 
@@ -206,7 +208,7 @@ webhooksRouter.post("/explain", async (req, res): Promise<void> => {
   }
 });
 
-webhooksRouter.post("/dir", async (req, res): Promise<void> => {
+router.post("/dir", async (req, res): Promise<void> => {
   try {
     const { token, text } = req.body;
 
@@ -238,7 +240,7 @@ webhooksRouter.post("/dir", async (req, res): Promise<void> => {
   }
 });
 
-webhooksRouter.post("/meet", async (req, res): Promise<void> => {
+router.post("/meet", async (req, res): Promise<void> => {
   try {
     const { token, text, user_name } = req.body;
 
