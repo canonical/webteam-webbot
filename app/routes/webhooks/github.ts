@@ -1,8 +1,10 @@
 import { logger } from "../../utils/logger";
 import { MattermostService } from "../../services/mattermost";
-import { webhooksRouter } from ".";
+import { Router } from "express";
 
-webhooksRouter.post("/gh-action-fail", async (req, res): Promise<void> => {
+export const router = Router();
+
+router.post("/gh-action-fail", async (req, res): Promise<void> => {
   try {
     const { repo_name, action_id, workflow } = req.body;
     const { room, custom_message } = req.query;

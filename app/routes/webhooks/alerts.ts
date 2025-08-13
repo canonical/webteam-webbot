@@ -4,7 +4,6 @@ import config from "../../config";
 import { MattermostService } from "../../services/mattermost";
 import { LRUCache } from "../../utils/lruCache";
 import { MessageAttachment } from "@mattermost/types/message_attachments";
-import { webhooksRouter } from ".";
 
 const MAX_CACHE_SIZE = 100;
 const ALERTMANAGER_BASE_URL =
@@ -15,7 +14,9 @@ const alertMessagesCache = new LRUCache<
   { postId: string; alerts: Set<string> }
 >(MAX_CACHE_SIZE);
 
-webhooksRouter.post("/alertmanager", async (req, res) => {
+export const router = Router();
+
+router.post("/alertmanager", async (req, res) => {
   const ALERTS_CHANNEL_ID = config.notifications.alerts_channel_id;
 
   if (!ALERTS_CHANNEL_ID) {
@@ -67,8 +68,6 @@ webhooksRouter.post("/alertmanager", async (req, res) => {
       alertName,
       severity,
     });
-    console.log(alertMessagesCache);
-
     res.send("OK");
   } catch (error) {
     logger.error("Alertmanager webhook error:", error);
