@@ -68,8 +68,6 @@ router.post("/alertmanager", async (req, res) => {
       alertName,
       severity,
     });
-    console.log(alertMessagesCache);
-
     res.send("OK");
   } catch (error) {
     logger.error("Alertmanager webhook error:", error);

@@ -3,6 +3,7 @@ import config from "../../config";
 import { GoogleSpreadsheet } from "google-spreadsheet";
 import { JWT } from "google-auth-library";
 import { Router } from "express";
+import { HttpsProxyAgent } from "https-proxy-agent";
 
 export const router = Router();
 
@@ -14,6 +15,11 @@ router.post("/acronym", async (req, res): Promise<void> => {
       email: config.google_sheets.client_email,
       key: config.google_sheets.private_key?.replace(/\\n/g, "\n"),
       scopes: ["https://www.googleapis.com/auth/spreadsheets"],
+      ...(process.env.HTTPS_PROXY && {
+        transportOptions: {
+          agent: new HttpsProxyAgent(process.env.HTTPS_PROXY),
+        },
+      }),
     });
 
     if (token !== config.mattermost.commands.acronym_token) {
@@ -31,6 +37,14 @@ router.post("/acronym", async (req, res): Promise<void> => {
           config.google_sheets.spreadsheet_id,
           serviceAccountAuth
         );
+
+        if (process.env.HTTPS_PROXY) {
+          doc.sheetsApi.defaults.proxy = false;
+          doc.sheetsApi.defaults.httpsAgent = new HttpsProxyAgent(
+            process.env.HTTPS_PROXY
+          );
+        }
+
         await doc.loadInfo();
 
         const sheet = doc.sheetsByIndex[0];
@@ -83,6 +97,11 @@ router.post("/explain", async (req, res): Promise<void> => {
       email: config.google_sheets.client_email,
       key: config.google_sheets.private_key?.replace(/\\n/g, "\n"),
       scopes: ["https://www.googleapis.com/auth/spreadsheets"],
+      ...(process.env.HTTPS_PROXY && {
+        transportOptions: {
+          agent: new HttpsProxyAgent(process.env.HTTPS_PROXY),
+        },
+      }),
     });
 
     if (token !== config.mattermost.commands.explain_token) {
@@ -102,6 +121,14 @@ router.post("/explain", async (req, res): Promise<void> => {
         config.google_sheets.spreadsheet_id,
         serviceAccountAuth
       );
+
+      if (process.env.HTTPS_PROXY) {
+        doc.sheetsApi.defaults.proxy = false;
+        doc.sheetsApi.defaults.httpsAgent = new HttpsProxyAgent(
+          process.env.HTTPS_PROXY
+        );
+      }
+
       await doc.loadInfo();
 
       let result = usage;
@@ -141,13 +168,10 @@ router.post("/explain", async (req, res): Promise<void> => {
           });
 
           if (row) {
-            // Increment count
             const currentCount = parseInt(row.get("Count") || "0");
             row.set("Count", (currentCount + 1).toString());
             await row.save();
-            console.log("Saved");
 
-            // Format response as markdown table
             result = `| Title | Description |\n|--|--|\n`;
             result += `| ${row.get("Explain")} | ${row.get("Definition")} |\n`;
 
