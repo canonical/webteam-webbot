@@ -9,9 +9,22 @@ import { MattermostService } from "./services/mattermost";
 import { ChatCommandService } from "./services/chatCommands";
 import multer from "multer";
 import { homeRouter } from "./routes/index";
+import promBundle from "express-prom-bundle";
 
 async function startServer(): Promise<void> {
   const app = express();
+
+  const metricsMiddleware = promBundle({
+    includeMethod: true,
+    includePath: true,
+    includeStatusCode: true,
+    includeUp: true,
+    promClient: {
+      collectDefaultMetrics: {},
+    },
+  });
+
+  app.use(metricsMiddleware);
 
   app.use(helmet());
   app.use(cors());
