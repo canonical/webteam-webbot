@@ -284,6 +284,151 @@ function getMattermostColor(status: string, severity: string): string {
   return "good";
 }
 
+async function createSite24x7Attachment(
+  mattermostService: MattermostService,
+  data: Site24x7WebhookData,
+  alertsChannelId: string
+): Promise<MessageAttachment> {
+  const status = data.STATUS || "UNKNOWN";
+  const monitorName = data.MONITORNAME || "Unknown Monitor";
+  const monitorType = data.MONITORTYPE || "Unknown";
+  const monitorUrl = data.MONITORURL || "";
+  const incidentTime = data.INCIDENT_TIME || data.ALERT_TIME_IN_TEXT || "";
+  const incidentReason = data.INCIDENT_REASON || "";
+  const incidentDetails = data.INCIDENT_DETAILS || "";
+  const failedLocations = data.FAILED_LOCATIONS || "";
+  const dashboardLink = data.MONITOR_DASHBOARD_LINK || "";
+  const tags = data.TAGS || "";
+  const groupName = data.MONITOR_GROUPNAME || "";
+  const outageDuration = data.OUTAGE_DURATION || "";
+  const failedAttributes = data.FAILED_ATTRIBUTES || "";
+  const alarmCategory = data.ALARM_CATEGORY || "";
+
+  const title = `[${status}] ${monitorName} (${monitorType})`;
+  const color = getSite24x7Color(status);
+
+  // Get vanguards for the channel
+  const vanguards = await getChannelVanguard(
+    mattermostService,
+    alertsChannelId
+  );
+
+  const fields = [
+    {
+      short: true,
+      title: "Monitor URL",
+      value: monitorUrl || "N/A",
+    },
+    {
+      short: true,
+      title: "Incident Time",
+      value: incidentTime || "N/A",
+    },
+    {
+      short: true,
+      title: "Failed Locations",
+      value: failedLocations || "N/A",
+    },
+    {
+      short: true,
+      title: "Group",
+      value: groupName || "N/A",
+    },
+  ];
+
+  if (outageDuration) {
+    fields.push({
+      short: true,
+      title: "Outage Duration",
+      value: outageDuration,
+    });
+  }
+
+  if (tags) {
+    fields.push({
+      short: true,
+      title: "Tags",
+      value: tags,
+    });
+  }
+
+  if (alarmCategory) {
+    fields.push({
+      short: true,
+      title: "Alarm Category",
+      value: alarmCategory,
+    });
+  }
+
+  if (failedAttributes) {
+    fields.push({
+      short: false,
+      title: "Failed Attributes",
+      value: failedAttributes,
+    });
+  }
+
+  // Add actions and vanguards
+  const actionFields = [];
+
+  if (dashboardLink) {
+    actionFields.push({
+      short: true,
+      title: "Actions",
+      value: `[📊 View Dashboard](${dashboardLink})`,
+    });
+  }
+
+  if (data.RCA_LINK) {
+    actionFields.push({
+      short: true,
+      title: "Root Cause Analysis",
+      value: `[🔍 View RCA](${data.RCA_LINK})`,
+    });
+  }
+
+  actionFields.push({
+    short: true,
+    title: "Vanguard",
+    value:
+      vanguards.length > 0
+        ? vanguards.map((v) => `@${v}`).join(" ")
+        : "No vanguards assigned",
+  });
+
+  fields.push(...actionFields);
+
+  let text = "";
+  if (incidentReason) {
+    text += `**Reason:** ${incidentReason}\n`;
+  }
+  if (incidentDetails) {
+    text += `**Details:** ${incidentDetails}\n`;
+  }
+
+  return {
+    color,
+    title,
+    text: text.trim(),
+    fields,
+    title_link: dashboardLink || undefined,
+  };
+}
+
+function getSite24x7Color(status: string): string {
+  switch (status.toUpperCase()) {
+    case "DOWN":
+    case "CRITICAL":
+      return "danger";
+    case "TROUBLE":
+      return "warning";
+    case "UP":
+      return "good";
+    default:
+      return "#439FE0";
+  }
+}
+
 type AlertManagerPayload = {
   alerts: Alert[];
   commonLabels?: Record<string, string>;
@@ -298,3 +443,71 @@ type Alert = {
   status?: string;
   fingerprint: string;
 };
+
+type Site24x7WebhookData = {
+  STATUS?: string;
+  MONITORTYPE?: string;
+  MONITORNAME?: string;
+  MONITORURL?: string;
+  INCIDENT_TIME?: string;
+  INCIDENT_REASON?: string;
+  INCIDENT_DETAILS?: string;
+  FAILED_LOCATIONS?: string;
+  MONITOR_DASHBOARD_LINK?: string;
+  TAGS?: string;
+  MONITOR_GROUPNAME?: string;
+  OUTAGE_TIME_UNIX_FORMAT?: string;
+  BU_NAME?: string;
+  FAILED_CHILD_RESOURCE?: string;
+  RCA_LINK?: string;
+  OUTAGE_DURATION?: string;
+  ALERT_TIME?: string;
+  ALERT_TIME_IN_TEXT?: string;
+  FAILED_ATTRIBUTES?: string;
+  STATUS_CHANGE_ATTRIBUTES?: string;
+  ALARM_CATEGORY?: string;
+  ATTRIBUTE_NAMES?: string;
+};
+
+// Site 24x7 alerts
+router.post("/site24x7", async (req, res) => {
+  const ALERTS_CHANNEL_ID = config.notifications.alerts_channel_id;
+
+  if (!ALERTS_CHANNEL_ID) {
+    logger.warn("ALERTS_CHANNEL_ID not set - skipping Site24x7 webhook");
+    res.status(500).send("ALERTS_CHANNEL_ID not configured");
+    return;
+  }
+
+  try {
+    const site24x7Data = req.body;
+    const mattermostService: MattermostService =
+      req.app.locals.mattermostService;
+
+    logger.info("Received Site24x7 webhook", {
+      status: site24x7Data.STATUS,
+      monitorName: site24x7Data.MONITORNAME,
+      monitorType: site24x7Data.MONITORTYPE,
+    });
+
+    const attachment = await createSite24x7Attachment(
+      mattermostService,
+      site24x7Data,
+      ALERTS_CHANNEL_ID
+    );
+
+    await mattermostService.sendMessageWithAttachments(ALERTS_CHANNEL_ID, "", [
+      attachment,
+    ]);
+
+    logger.info("Site24x7 alert processed successfully", {
+      monitorName: site24x7Data.MONITORNAME,
+      status: site24x7Data.STATUS,
+    });
+
+    res.send("OK");
+  } catch (error) {
+    logger.error("Site24x7 webhook error:", error);
+    res.status(500).send("Internal server error");
+  }
+});
