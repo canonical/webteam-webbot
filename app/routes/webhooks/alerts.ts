@@ -296,15 +296,12 @@ async function createSite24x7Attachment(
   const incidentTime = data.INCIDENT_TIME || data.ALERT_TIME_IN_TEXT || "";
   const incidentReason = data.INCIDENT_REASON || "";
   const incidentDetails = data.INCIDENT_DETAILS || "";
-  const failedLocations = data.FAILED_LOCATIONS || "";
   const dashboardLink = data.MONITOR_DASHBOARD_LINK || "";
   const tags = data.TAGS || "";
-  const groupName = data.MONITOR_GROUPNAME || "";
   const outageDuration = data.OUTAGE_DURATION || "";
-  const failedAttributes = data.FAILED_ATTRIBUTES || "";
   const alarmCategory = data.ALARM_CATEGORY || "";
 
-  const title = `[${status}] ${monitorName} (${monitorType})`;
+  const title = `[${status}] ${monitorName}`;
   const color = getSite24x7Color(status);
 
   // Get vanguards for the channel
@@ -323,16 +320,6 @@ async function createSite24x7Attachment(
       short: true,
       title: "Incident Time",
       value: incidentTime || "N/A",
-    },
-    {
-      short: true,
-      title: "Failed Locations",
-      value: failedLocations || "N/A",
-    },
-    {
-      short: true,
-      title: "Group",
-      value: groupName || "N/A",
     },
   ];
 
@@ -360,13 +347,6 @@ async function createSite24x7Attachment(
     });
   }
 
-  if (failedAttributes) {
-    fields.push({
-      short: false,
-      title: "Failed Attributes",
-      value: failedAttributes,
-    });
-  }
 
   // Add actions and vanguards
   const actionFields = [];
@@ -471,7 +451,11 @@ type Site24x7WebhookData = {
 
 // Site 24x7 alerts
 router.post("/site24x7", async (req, res) => {
-  const ALERTS_CHANNEL_ID = config.notifications.alerts_channel_id;
+  const DEFAULT_ALERTS_CHANNEL_ID = config.notifications.alerts_channel_id;
+
+  const specifiedChannelId = req.query.channel_id as string;
+
+  const ALERTS_CHANNEL_ID = specifiedChannelId || DEFAULT_ALERTS_CHANNEL_ID;
 
   if (!ALERTS_CHANNEL_ID) {
     logger.warn("ALERTS_CHANNEL_ID not set - skipping Site24x7 webhook");
