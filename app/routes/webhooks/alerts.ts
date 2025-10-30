@@ -14,6 +14,10 @@ const alertMessagesCache = new LRUCache<
   { postId: string; alerts: Set<string> }
 >(MAX_CACHE_SIZE);
 
+const site24x7MessagesCache = new LRUCache<string, { postId: string }>(
+  MAX_CACHE_SIZE
+);
+
 export const router = Router();
 
 router.post("/alertmanager", async (req, res) => {
@@ -323,7 +327,7 @@ async function createSite24x7Attachment(
     },
   ];
 
-  if (outageDuration) {
+  if (outageDuration && status.toUpperCase() !== "DOWN") {
     fields.push({
       short: true,
       title: "Outage Duration",
@@ -346,7 +350,6 @@ async function createSite24x7Attachment(
       value: alarmCategory,
     });
   }
-
 
   // Add actions and vanguards
   const actionFields = [];
@@ -474,15 +477,48 @@ router.post("/site24x7", async (req, res) => {
       monitorType: site24x7Data.MONITORTYPE,
     });
 
+    const status = site24x7Data.STATUS || "UNKNOWN";
+    const monitorName = site24x7Data.MONITORNAME || "Unknown Monitor";
+    const cacheKey = `site24x7_${monitorName}`;
+
     const attachment = await createSite24x7Attachment(
       mattermostService,
       site24x7Data,
       ALERTS_CHANNEL_ID
     );
 
-    await mattermostService.sendMessageWithAttachments(ALERTS_CHANNEL_ID, "", [
-      attachment,
-    ]);
+    if (status.toUpperCase() === "UP") {
+      // Handle UP/resolve message - reply to original alert if it exists
+      const cachedData = site24x7MessagesCache.get(cacheKey);
+
+      if (cachedData) {
+        await mattermostService.sendMessageWithAttachments(
+          ALERTS_CHANNEL_ID,
+          "",
+          [attachment],
+          cachedData.postId
+        );
+
+        site24x7MessagesCache.delete(cacheKey);
+      } else {
+        await mattermostService.sendMessageWithAttachments(
+          ALERTS_CHANNEL_ID,
+          "",
+          [attachment]
+        );
+      }
+    } else {
+      // Handle DOWN/alert message - create new alert and cache it
+
+      const postId = await mattermostService.sendMessageWithAttachments(
+        ALERTS_CHANNEL_ID,
+        "",
+        [attachment]
+      );
+      if (postId) {
+        site24x7MessagesCache.set(cacheKey, { postId });
+      }
+    }
 
     logger.info("Site24x7 alert processed successfully", {
       monitorName: site24x7Data.MONITORNAME,

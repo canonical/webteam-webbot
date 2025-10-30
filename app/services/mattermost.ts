@@ -87,8 +87,6 @@ export class MattermostService {
       });
 
       this.wsClient.on("open", () => {
-        logger.info("WebSocket connection established");
-
         // Send authentication message
         if (this.wsClient) {
           this.wsClient.send(
@@ -126,13 +124,9 @@ export class MattermostService {
       });
 
       this.wsClient.on("close", (code: number, reason: Buffer) => {
-        logger.warn(
-          `WebSocket connection closed: ${code} ${reason.toString()}`
-        );
         // Attempt to reconnect after a delay
         setTimeout(() => {
           if (!this.wsClient || this.wsClient.readyState === WebSocket.CLOSED) {
-            logger.info("Attempting to reconnect WebSocket...");
             this.initializeWebSocket().catch((err) => {
               logger.error("Failed to reconnect WebSocket:", err);
             });
@@ -160,7 +154,6 @@ export class MattermostService {
     if (this.wsClient) {
       this.wsClient.close();
       this.wsClient = null;
-      logger.info("WebSocket connection closed");
     }
   }
 
