@@ -20,7 +20,8 @@
   "notifications": {
     "release_rooms": "",
     "release_secret": "",
-    "alerts_channel_id": ""
+    "alerts_channel_id": "",
+    "snap_reports_channel_id": ""
   },
   "github": {
     "token": ""

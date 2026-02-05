@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - 'snap-reports' # TODO: remove before merge
   workflow_dispatch:
 permissions:
   contents: read
