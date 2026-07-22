@@ -15,7 +15,7 @@ router.post("/snap-report", async (req, res): Promise<void> => {
   }
 
   try {
-    const { snap_name, reason, comment } = req.body;
+    const { snap_name, reason, comment, source } = req.body;
     const mattermostService: MattermostService =
       req.app.locals.mattermostService;
 
@@ -28,7 +28,7 @@ router.post("/snap-report", async (req, res): Promise<void> => {
 
     const snapLink = `https://snapcraft.io/${encodeURIComponent(snap_name)}`;
     const message =
-      `:warning: **Snap [${snap_name}](${snapLink}) has been reported:**\n` +
+      `:warning: **${source ? `[${source}] ` : ""}Snap [${snap_name}](${snapLink}) has been reported:**\n` +
       `**Reason:** ${reason}\n` +
       `**Comment:** ${comment}`;
 
