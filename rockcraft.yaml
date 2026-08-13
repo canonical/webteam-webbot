@@ -13,8 +13,6 @@ extensions:
 
 parts:
   expressjs-framework/install-app:
-    build-snaps:
-      - bun-js
     override-build: |
       rm -rf node_modules
 
@@ -22,7 +20,7 @@ parts:
       npm install --include=dev
       chown -R $(whoami) node_modules
 
-      bun run build
+      npx --yes bun run build
 
       craftctl default
       mkdir -p ${CRAFT_PART_INSTALL}/lib/node_modules/canonical-webbot/dist
@@ -32,4 +30,3 @@ parts:
       chown -R 584792:584792 ${CRAFT_PART_INSTALL}/lib/node_modules/canonical-webbot
       ln -s /lib/node_modules/canonical-webbot ${CRAFT_PART_INSTALL}/app
       chown -R 584792:584792 ${CRAFT_PART_INSTALL}/app
-
