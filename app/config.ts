@@ -29,6 +29,7 @@ export interface BotConfig {
     release_secret: string;
     alerts_channel_id: string;
     snap_reports_channel_id: string;
+    snap_selection_channel_id: string;
   };
 
   github: {
