@@ -5,6 +5,7 @@ import { router as githubRouter } from "./github";
 import { router as releaseRouter } from "./release";
 import { router as figmaRouter } from "./figma";
 import { router as snapReportsRouter } from "./snapReports";
+import { router as snapSelectionRouter } from "./snapSelection";
 
 const router = Router();
 
@@ -14,5 +15,6 @@ router.use(githubRouter);
 router.use(releaseRouter);
 router.use(figmaRouter);
 router.use(snapReportsRouter);
+router.use(snapSelectionRouter);
 
 export { router as webhooksRouter };
