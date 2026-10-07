@@ -6,6 +6,7 @@ import { router as releaseRouter } from "./release";
 import { router as figmaRouter } from "./figma";
 import { router as snapReportsRouter } from "./snapReports";
 import { router as snapSelectionRouter } from "./snapSelection";
+import { router as sentryRouter } from "./sentry";
 
 const router = Router();
 
@@ -16,5 +17,6 @@ router.use(releaseRouter);
 router.use(figmaRouter);
 router.use(snapReportsRouter);
 router.use(snapSelectionRouter);
+router.use(sentryRouter);
 
 export { router as webhooksRouter };

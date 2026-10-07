@@ -30,6 +30,8 @@ export interface BotConfig {
     alerts_channel_id: string;
     snap_reports_channel_id: string;
     snap_selection_channel_id: string;
+    sentry_channel_id: string;
+    sentry_project_channels: Record<string, string>;
   };
 
   github: {
