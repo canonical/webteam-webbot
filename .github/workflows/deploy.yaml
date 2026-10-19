@@ -30,7 +30,7 @@ jobs:
   deploy:
     needs: setup
     name: Deploy
-    uses: canonical/webteam-devops/.github/workflows/deploy.yaml@experimental
+    uses: canonical/webteam-devops/.github/workflows/deploy.yaml@main
     permissions:
       packages: write
       id-token: write
@@ -41,7 +41,7 @@ jobs:
       channel: ${{ needs.setup.outputs.channel }}
       juju_controller_name: ${{ needs.setup.outputs.juju_controller_name }}
       juju_model_name: ${{ needs.setup.outputs.juju_model_name }}
-      enable_experimental_extensions: true
+      deploy_method: juju
     secrets:
       VAULT_APPROLE_ROLE_ID: ${{ secrets.VAULT_APPROLE_ROLE_ID }}
       VAULT_APPROLE_SECRET_ID: ${{ secrets.VAULT_APPROLE_SECRET_ID }}
