@@ -31,5 +31,17 @@
     "spreadsheet_id": "",
     "client_email": "",
     "private_key": ""
+  },
+  "google_docs": {
+    "type": "service_account",
+    "project_id": "",
+    "private_key": "",
+    "client_email": "",
+    "client_id": "",
+    "token_uri": "https://oauth2.googleapis.com/token"
+  },
+  "dead_links": {
+    "token": "",
+    "send_direct_messages": false
   }
 }
