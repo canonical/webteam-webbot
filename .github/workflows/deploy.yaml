@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - site247
   workflow_dispatch:
 permissions:
   contents: read
