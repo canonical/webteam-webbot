@@ -13,6 +13,7 @@ bun install
 2. Set up configuration:
    - Copy `config.json` to `config.local.json`
    - Configure credentials (prod credentials in bitwarden)
+   - When running locally with the production token, set `mattermost.websocket_enabled` to `false`. Otherwise your copy listens for chat commands next to the deployed bot and both answer. Webhooks, DMs and posts don't need the websocket.
 
 ## Development
 

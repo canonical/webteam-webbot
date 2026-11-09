@@ -36,12 +36,14 @@ export class MattermostService {
   private wsClient: WebSocket | null = null;
   private accessToken: string;
   private host: string;
+  private websocketEnabled: boolean;
   private myId: string | null = null;
   private messageHandlers: MessageHandler[] = [];
 
   constructor(config: MattermostConfig) {
     this.accessToken = config.access_token || "";
     this.host = config.host || "chat.canonical.com";
+    this.websocketEnabled = config.websocket_enabled !== false;
     this.client = new Client4();
 
     if (!this.accessToken) {
@@ -65,7 +67,13 @@ export class MattermostService {
       this.myId = me.id;
       logger.info(`Connected to Mattermost as ${me.username} (${me.id})`);
 
-      await this.initializeWebSocket();
+      // The websocket is only needed for chat commands; webhooks, DMs and
+      // posts use the REST client above, so they work without it.
+      if (this.websocketEnabled) {
+        await this.initializeWebSocket();
+      } else {
+        logger.info("WebSocket disabled by config");
+      }
     } catch (error) {
       logger.error("Failed to initialize Mattermost connection:", error);
       throw error;

@@ -10,6 +10,7 @@
     "access_token": "",
     "base_url": "",
     "token": "",
+    "websocket_enabled": true,
     "commands": {
       "acronym_token": "",
       "meet_token": "",

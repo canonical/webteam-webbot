@@ -8,6 +8,9 @@ export interface MattermostConfig {
   access_token: string;
   base_url: string;
   token: string;
+  // Listening for chat commands is on unless this is exactly false. Turn it off
+  // for a local run with the production token, or both copies would answer.
+  websocket_enabled?: boolean;
   commands: {
     acronym_token: string;
     meet_token: string;
