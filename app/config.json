@@ -22,7 +22,9 @@
     "release_secret": "",
     "alerts_channel_id": "",
     "snap_reports_channel_id": "",
-    "snap_selection_channel_id": ""
+    "snap_selection_channel_id": "",
+    "site_report_channel_id": "",
+    "site_report_secret": ""
   },
   "github": {
     "token": ""
