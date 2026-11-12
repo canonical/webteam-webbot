@@ -35,6 +35,8 @@ export interface BotConfig {
     snap_selection_channel_id: string;
     sentry_channel_id: string;
     sentry_project_channels: Record<string, string>;
+    site_report_channel_id: string;
+    site_report_secret: string;
   };
 
   github: {

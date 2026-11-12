@@ -7,6 +7,7 @@ import { router as figmaRouter } from "./figma";
 import { router as snapReportsRouter } from "./snapReports";
 import { router as snapSelectionRouter } from "./snapSelection";
 import { router as sentryRouter } from "./sentry";
+import { router as siteReportRouter } from "./siteReport";
 import { router as deadLinksRouter } from "./deadLinks";
 
 const router = Router();
@@ -19,6 +20,7 @@ router.use(figmaRouter);
 router.use(snapReportsRouter);
 router.use(snapSelectionRouter);
 router.use(sentryRouter);
+router.use(siteReportRouter);
 router.use(deadLinksRouter);
 
 export { router as webhooksRouter };
