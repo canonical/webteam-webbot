@@ -76,9 +76,18 @@ These endpoints are also available under `/hubot` for backwards compatibility
 
 The owner is read from the "Page owner" row of the copydoc: either a person chip, or a name optionally followed by `/` or `,` and a department. The name is matched to a Mattermost user, and only an exact single match gets a DM.
 
-Optional body fields: `dry_run` (boolean) skips the DMs for this request even if they are enabled in the config, and `omitted_pages` / `omitted_links` (integers) tell the bot how much the sender left out to keep the request under the 100 kB body limit.
+Optional body fields:
 
-Copydocs whose owner could not be found or matched (a folder instead of a document, an unreadable doc, no owner row, no or several Mattermost matches) are listed in `room`. This also happens when DMs are off. When DMs are off, nobody is messaged and nothing is said about who would have been.
+- `dry_run` (boolean) skips the DMs for this request even if they are enabled in the config
+- `omitted_pages` / `omitted_links` (integers) tell the bot how much the sender left out to keep the request under the 100 kB body limit
+- `fetch_failed` (boolean, on a page) says the page could not be fetched, so `copydoc_url` is `null` because it is unknown rather than missing. Such pages are reported in `room` with that reason
+- `widespread_links` (array of `{ "url", "result", "page_count" }`, at most 100) are links broken on so many pages (a footer link, for example) that listing them per page would drown the real findings. They are posted once in `room` and are never part of an owner's DM
+
+Copydocs whose owner could not be found or matched (a folder instead of a document, an unreadable doc, no owner row, a deactivated or bot account, no or several Mattermost matches) are listed in `room`, together with the widespread links. This also happens when DMs are off. When DMs are off, nobody is messaged and nothing is said about who would have been.
+
+Mattermost rejects posts over 16,383 characters, so a longer DM or channel message is split into several posts.
+
+The endpoint answers `200` with a JSON summary. It answers `502` with the same summary when something was meant for `room` and the post failed, so that the caller can tell part of the report reached nobody. A DM that fails does not cause a `502` as long as the owner's copydoc is then reported in `room`.
 
 Config keys (all optional, the endpoint answers 503 without a token):
 
