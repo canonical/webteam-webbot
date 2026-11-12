@@ -36,17 +36,19 @@ export class MattermostService {
   private wsClient: WebSocket | null = null;
   private accessToken: string;
   private host: string;
+  private websocketEnabled: boolean;
   private myId: string | null = null;
   private messageHandlers: MessageHandler[] = [];
 
   constructor(config: MattermostConfig) {
     this.accessToken = config.access_token || "";
     this.host = config.host || "chat.canonical.com";
+    this.websocketEnabled = config.websocket_enabled !== false;
     this.client = new Client4();
 
     if (!this.accessToken) {
       logger.warn(
-        "Mattermost access token not provided - Mattermost features will be disabled"
+        "Mattermost access token not provided - Mattermost features will be disabled",
       );
     }
   }
@@ -65,7 +67,13 @@ export class MattermostService {
       this.myId = me.id;
       logger.info(`Connected to Mattermost as ${me.username} (${me.id})`);
 
-      await this.initializeWebSocket();
+      // The websocket is only needed for chat commands; webhooks, DMs and
+      // posts use the REST client above, so they work without it.
+      if (this.websocketEnabled) {
+        await this.initializeWebSocket();
+      } else {
+        logger.info("WebSocket disabled by config");
+      }
     } catch (error) {
       logger.error("Failed to initialize Mattermost connection:", error);
       throw error;
@@ -98,7 +106,7 @@ export class MattermostService {
               data: {
                 token: this.accessToken,
               },
-            })
+            }),
           );
         }
       });
@@ -127,7 +135,7 @@ export class MattermostService {
 
       this.wsClient.on("close", (code: number, reason: Buffer) => {
         logger.warn(
-          `WebSocket connection closed: ${code} ${reason.toString()}`
+          `WebSocket connection closed: ${code} ${reason.toString()}`,
         );
         // Attempt to reconnect after a delay
         setTimeout(() => {
@@ -167,7 +175,7 @@ export class MattermostService {
   public async sendMessage(
     channelId: string,
     message: string,
-    rootId?: string
+    rootId?: string,
   ): Promise<string | undefined> {
     if (!this.accessToken) {
       logger.warn("Cannot send message - Mattermost not configured");
@@ -194,7 +202,7 @@ export class MattermostService {
     channelId: string,
     message: string,
     attachments: MessageAttachment[],
-    rootId?: string
+    rootId?: string,
   ): Promise<string | undefined> {
     if (!this.accessToken) {
       logger.warn("Cannot send message - Mattermost not configured");
@@ -217,7 +225,7 @@ export class MattermostService {
     } catch (error) {
       logger.error(
         `Failed to send message with attachments to channel ${channelId}:`,
-        error
+        error,
       );
       throw error;
     }
@@ -225,7 +233,7 @@ export class MattermostService {
 
   public async sendMessageToRoom(
     roomName: string,
-    message: string
+    message: string,
   ): Promise<void> {
     if (!this.accessToken) {
       logger.warn("Cannot send message - Mattermost not configured");
@@ -245,7 +253,7 @@ export class MattermostService {
             }
           } catch (teamError) {
             logger.debug(
-              `Channel '${roomName}' not found in team ${team.name}`
+              `Channel '${roomName}' not found in team ${team.name}`,
             );
           }
         }
@@ -258,7 +266,7 @@ export class MattermostService {
           const me = await this.client.getMe();
           const channels = await this.client.getMyChannels(me.id);
           channel = channels.find(
-            (c) => c.name === roomName || c.display_name === roomName
+            (c) => c.name === roomName || c.display_name === roomName,
           );
         } catch (channelsError) {
           logger.error("Could not access user channels:", channelsError);
@@ -321,7 +329,7 @@ export class MattermostService {
         const me = await this.client.getMe();
         const channels = await this.client.getMyChannels(me.id);
         channel = channels.find(
-          (c) => c.name === name || c.display_name === name
+          (c) => c.name === name || c.display_name === name,
         );
       }
 
@@ -332,6 +340,61 @@ export class MattermostService {
       return channel;
     } catch (error) {
       logger.error(`Failed to get channel ${name}:`, error);
+      throw error;
+    }
+  }
+
+  // Returns null when no user has this email (Mattermost answers 404), and
+  // throws on any other failure so callers can tell "unknown" from "broken".
+  public async getUserByEmail(email: string): Promise<UserProfile | null> {
+    if (!this.accessToken) {
+      throw new Error("Mattermost not configured");
+    }
+
+    try {
+      return await this.client.getUserByEmail(email);
+    } catch (error) {
+      if ((error as { status_code?: number }).status_code === 404) {
+        return null;
+      }
+      logger.error(`Failed to look up user by email ${email}:`, error);
+      throw error;
+    }
+  }
+
+  // Mattermost matches the term loosely (prefixes of the username, name and
+  // nickname), so callers must still check that a result is really the person.
+  public async searchUsers(term: string): Promise<UserProfile[]> {
+    if (!this.accessToken) {
+      throw new Error("Mattermost not configured");
+    }
+
+    try {
+      return await this.client.searchUsers(term, {});
+    } catch (error) {
+      logger.error(`Failed to search users for '${term}':`, error);
+      throw error;
+    }
+  }
+
+  // Needs myId, which initialize() sets. Creating a direct channel that
+  // already exists returns the existing one, so this is safe to repeat.
+  public async sendDirectMessage(
+    userId: string,
+    message: string,
+  ): Promise<void> {
+    if (!this.accessToken || !this.myId) {
+      throw new Error("Mattermost not configured");
+    }
+
+    try {
+      const channel = await this.client.createDirectChannel([
+        this.myId,
+        userId,
+      ]);
+      await this.sendMessage(channel.id, message);
+    } catch (error) {
+      logger.error(`Failed to send direct message to ${userId}:`, error);
       throw error;
     }
   }
@@ -377,7 +440,7 @@ export class MattermostService {
 
   public async updateChannelHeader(
     channelId: string,
-    header: string
+    header: string,
   ): Promise<void> {
     if (!this.accessToken) {
       throw new Error("Mattermost not configured");

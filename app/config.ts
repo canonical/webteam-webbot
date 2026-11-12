@@ -8,6 +8,9 @@ export interface MattermostConfig {
   access_token: string;
   base_url: string;
   token: string;
+  // Listening for chat commands is on unless this is exactly false. Turn it off
+  // for a local run with the production token, or both copies would answer.
+  websocket_enabled?: boolean;
   commands: {
     acronym_token: string;
     meet_token: string;
@@ -44,6 +47,27 @@ export interface BotConfig {
     spreadsheet_id: string;
     client_email: string;
     private_key: string;
+  };
+
+  // Optional: production config files predate these sections.
+  // Dead link notifications. The endpoint refuses all requests without a token.
+  dead_links?: {
+    // Shared secret that the site's CI sends as a bearer token.
+    token: string;
+    // Direct messages are only sent when this is exactly true. Left off, the
+    // bot still lists copydocs without a findable owner in the room.
+    send_direct_messages?: boolean;
+  };
+
+  // A service account key that can read the copydocs (same fields as the key
+  // file Google gives out).
+  google_docs?: {
+    type: string;
+    project_id: string;
+    private_key: string;
+    client_email: string;
+    client_id: string;
+    token_uri: string;
   };
 }
 
